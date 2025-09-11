@@ -1,8 +1,6 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { Review, Sentiment, SentimentAnalysisResult } from '../types';
 
-// Fix: Per coding guidelines, initialize GoogleGenAI with process.env.API_KEY.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const sentimentSchema = {
@@ -50,7 +48,6 @@ const sentimentSchema = {
 };
 
 export const analyzeReviewSentiment = async (reviews: Review[]): Promise<SentimentAnalysisResult> => {
-  // Fix: Removed API key check as per guidelines, which state to assume it is configured.
   if (reviews.length === 0) {
     return {
         sentiments: [],

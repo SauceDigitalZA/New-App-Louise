@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { LOCATIONS, BRANDS } from '../constants';
 import { Filters, Location, DailyMetric, Review } from '../types';
-// Fix: Import date-fns functions from their submodules to resolve module loading issues.
+// Fix: Use subpath imports for date-fns to resolve module errors.
 import isWithinInterval from 'date-fns/isWithinInterval';
 import parseISO from 'date-fns/parseISO';
 

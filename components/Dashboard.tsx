@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-// Fix: Import date-fns functions from their submodules to resolve module loading issues.
+// Fix: Use subpath imports for date-fns to resolve module errors.
 import subDays from 'date-fns/subDays';
 import startOfMonth from 'date-fns/startOfMonth';
 import endOfMonth from 'date-fns/endOfMonth';

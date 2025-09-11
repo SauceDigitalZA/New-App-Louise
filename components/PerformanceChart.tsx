@@ -1,7 +1,7 @@
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { DailyMetric } from '../types';
-// Fix: Import date-fns functions from their submodules to resolve module loading issues.
+// Fix: Use subpath imports for date-fns to resolve module errors.
 import format from 'date-fns/format';
 import parseISO from 'date-fns/parseISO';
 

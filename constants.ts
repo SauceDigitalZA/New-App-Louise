@@ -1,5 +1,5 @@
 import { Brand, Location, Review, Sentiment, DailyMetric } from './types';
-// Fix: Import date-fns functions from their submodules to resolve module loading issues.
+// Fix: Use subpath imports for date-fns to resolve module errors.
 import subDays from 'date-fns/subDays';
 import format from 'date-fns/format';
 
