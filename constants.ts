@@ -1,6 +1,7 @@
-
 import { Brand, Location, Review, Sentiment, DailyMetric } from './types';
-import { subDays, format } from 'date-fns';
+// Fix: Import date-fns functions from their specific submodules to resolve module loading issues.
+import subDays from 'date-fns/subDays';
+import format from 'date-fns/format';
 
 const generateMetrics = (days: number): DailyMetric[] => {
   const metrics: DailyMetric[] = [];

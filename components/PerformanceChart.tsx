@@ -1,8 +1,9 @@
-
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { DailyMetric } from '../types';
-import { format, parseISO } from 'date-fns';
+// Fix: Import date-fns functions from their specific submodules to resolve module loading issues.
+import format from 'date-fns/format';
+import parseISO from 'date-fns/parseISO';
 
 interface PerformanceChartProps {
   data: DailyMetric[];

@@ -1,8 +1,9 @@
-
 import React from 'react';
 import { Review, Sentiment } from '../types';
-import { format, parseISO } from 'date-fns';
-import { Star, ThumbsUp, ThumbsDown, Minus, WandSparkles } from 'lucide-react';
+// Fix: Import date-fns functions from their specific submodules to resolve module loading issues.
+import format from 'date-fns/format';
+import parseISO from 'date-fns/parseISO';
+import { Star, ThumbsUp, ThumbsDown, Minus, Sparkles } from 'lucide-react';
 import SentimentSummary from './SentimentSummary';
 
 interface ReviewsPanelProps {
@@ -54,7 +55,7 @@ const ReviewsPanel: React.FC<ReviewsPanelProps> = ({ reviews, summaries, onAnaly
                     </>
                 ) : (
                     <>
-                        <WandSparkles className="w-4 h-4" />
+                        <Sparkles className="w-4 h-4" />
                         Analyze Sentiments
                     </>
                 )}

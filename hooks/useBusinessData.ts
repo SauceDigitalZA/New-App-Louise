@@ -1,8 +1,9 @@
-
 import { useMemo } from 'react';
 import { LOCATIONS, BRANDS } from '../constants';
 import { Filters, Location, DailyMetric, Review } from '../types';
-import { isWithinInterval, parseISO } from 'date-fns';
+// Fix: Import date-fns functions from their specific submodules to resolve module loading issues.
+import isWithinInterval from 'date-fns/isWithinInterval';
+import parseISO from 'date-fns/parseISO';
 
 const filterMetricsByDate = (metrics: DailyMetric[], dateRange: { from: Date; to: Date }) => {
   return metrics.filter(m => isWithinInterval(parseISO(m.date), dateRange));
