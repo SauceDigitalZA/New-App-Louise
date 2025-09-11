@@ -2,13 +2,8 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Review, Sentiment, SentimentAnalysisResult } from '../types';
 
-const API_KEY = process.env.API_KEY;
-
-if (!API_KEY) {
-  console.warn("API_KEY environment variable not set. Gemini API calls will fail.");
-}
-
-const ai = new GoogleGenAI({ apiKey: API_KEY! });
+// Fix: Per coding guidelines, initialize GoogleGenAI with process.env.API_KEY.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const sentimentSchema = {
   type: Type.OBJECT,
@@ -55,9 +50,7 @@ const sentimentSchema = {
 };
 
 export const analyzeReviewSentiment = async (reviews: Review[]): Promise<SentimentAnalysisResult> => {
-  if (!API_KEY) {
-    throw new Error("Gemini API key is not configured.");
-  }
+  // Fix: Removed API key check as per guidelines, which state to assume it is configured.
   if (reviews.length === 0) {
     return {
         sentiments: [],
