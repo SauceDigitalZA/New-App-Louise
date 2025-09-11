@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Brand, Location, Filters, DailyMetric, Review } from '../types';
-// Fix: Import date-fns functions from their specific submodules for consistency and to prevent module loading issues.
-import format from 'date-fns/format';
+// Fix: Use named imports from 'date-fns' to resolve module resolution errors with 'not callable' types.
+import { format } from 'date-fns';
 import { Download, SlidersHorizontal, BarChartBig } from 'lucide-react';
 import { exportToPDF, exportToExcel } from '../services/exportService';
 

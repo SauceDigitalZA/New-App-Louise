@@ -1,8 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
-// Fix: Import date-fns functions from their specific submodules to resolve module loading issues.
-import subDays from 'date-fns/subDays';
-import startOfMonth from 'date-fns/startOfMonth';
-import endOfMonth from 'date-fns/endOfMonth';
+// Fix: Use named imports from 'date-fns' to resolve module resolution errors with 'not callable' types.
+import { subDays, startOfMonth, endOfMonth } from 'date-fns';
 import { BarChart2, MessageSquareQuote, Users, LineChart, Star } from 'lucide-react';
 
 import { Filters, DateRange, Review as ReviewType, Sentiment } from '../types';

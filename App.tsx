@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { BriefcaseBusiness, BarChart2 } from 'lucide-react';
+import { Briefcase, BarChart2 } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 
 const App: React.FC = () => {
@@ -17,7 +17,7 @@ const App: React.FC = () => {
       <div className="flex items-center justify-center min-h-screen bg-slate-100">
         <div className="text-center p-8 bg-white rounded-xl shadow-lg max-w-lg mx-auto">
           <div className="flex justify-center items-center mx-auto w-20 h-20 bg-slate-100 rounded-full mb-6">
-            <BriefcaseBusiness className="w-10 h-10 text-slate-600" />
+            <Briefcase className="w-10 h-10 text-slate-600" />
           </div>
           <h1 className="text-3xl font-bold text-slate-800 mb-2">GMB Insights Dashboard</h1>
           <p className="text-slate-600 mb-8">
