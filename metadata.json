@@ -1,0 +1,5 @@
+{
+  "name": "GMB Insights Dashboard",
+  "description": "A comprehensive reporting dashboard for Google My Business accounts. It tracks key metrics like impressions, customer actions, and reviews by store. It features AI-powered sentiment analysis of reviews and allows data exporting to PDF and Excel.",
+  "requestFramePermissions": []
+}
