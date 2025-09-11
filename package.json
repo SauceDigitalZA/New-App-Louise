@@ -17,6 +17,7 @@
     "jspdf": "^2.5.1",
     "html2canvas": "^1.4.1",
     "xlsx": "^0.18.5"
+    "vue-virtual-scroller": "^1.4.7"
   },
   "devDependencies": {
     "@types/react": "^18.2.55",
