@@ -58,7 +58,6 @@ const App: React.FC = () => {
           console.error("Error during login process:", err);
           setError(err instanceof Error ? err.message : "An unknown error occurred.");
           setAppState('error');
-          logOut();
         }
       }
     };
