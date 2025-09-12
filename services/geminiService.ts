@@ -1,5 +1,11 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { Review, Sentiment, SentimentAnalysisResult } from '../types';
+import { Sentiment, SentimentAnalysisResult } from '../types';
+
+// Simplified review type for analysis to be compatible with ProcessedReview
+interface ReviewForAnalysis {
+  id: string;
+  text: string;
+}
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -47,7 +53,7 @@ const sentimentSchema = {
   required: ["sentiments", "summaries"],
 };
 
-export const analyzeReviewSentiment = async (reviews: Review[]): Promise<SentimentAnalysisResult> => {
+export const analyzeReviewSentiment = async (reviews: ReviewForAnalysis[]): Promise<SentimentAnalysisResult> => {
   if (reviews.length === 0) {
     return {
         sentiments: [],

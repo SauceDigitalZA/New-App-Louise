@@ -1,36 +1,38 @@
-import React, { useState } from 'react';
-import { Brand, Location, Filters, DailyMetric, Review, User } from '../types';
-// Fix: Changed date-fns imports to use direct paths to fix module resolution issues.
-import format from 'date-fns/format';
-import subDays from 'date-fns/subDays';
-import differenceInDays from 'date-fns/differenceInDays';
+import React, { useState, useMemo } from 'react';
+import { ApiLocation, Filters, ChartDataPoint, ProcessedReview, User } from '../types';
+// Fix: Consolidate date-fns imports to resolve module resolution issues.
+import { format, subDays, differenceInDays } from 'date-fns';
 import { Download, SlidersHorizontal, BarChartBig, Search, LogOut } from 'lucide-react';
 import { exportToPDF, exportToExcel } from '../services/exportService';
 
 interface HeaderProps {
-  brands: Brand[];
-  locations: Location[];
+  locations: ApiLocation[];
   filters: Filters;
   onFiltersChange: (newFilters: Partial<Filters>) => void;
-  chartData: DailyMetric[];
-  reviewsData: Review[];
+  chartData: ChartDataPoint[];
+  reviewsData: ProcessedReview[];
   user: User;
   onLogout: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ brands, locations, filters, onFiltersChange, chartData, reviewsData, user, onLogout }) => {
+const Header: React.FC<HeaderProps> = ({ locations, filters, onFiltersChange, chartData, reviewsData, user, onLogout }) => {
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [locationSearch, setLocationSearch] = useState('');
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+
+  const groupedBrands = useMemo(() => {
+    const brandNames = [...new Set(locations.map(loc => loc.title))];
+    return brandNames.map(name => ({ id: name, name }));
+  }, [locations]);
   
   const handleBrandChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onFiltersChange({ brandId: e.target.value, locationIds: [] });
   };
   
-  const handleLocationToggle = (locationId: string) => {
-    const newLocationIds = filters.locationIds.includes(locationId)
-      ? filters.locationIds.filter(id => id !== locationId)
-      : [...filters.locationIds, locationId];
+  const handleLocationToggle = (locationName: string) => { // locationName is the full "locations/123" identifier
+    const newLocationIds = filters.locationIds.includes(locationName)
+      ? filters.locationIds.filter(id => id !== locationName)
+      : [...filters.locationIds, locationName];
     onFiltersChange({ locationIds: newLocationIds });
   };
   
@@ -60,9 +62,15 @@ const Header: React.FC<HeaderProps> = ({ brands, locations, filters, onFiltersCh
   const selectedLocationsText = filters.locationIds.length > 0 
     ? `${filters.locationIds.length} location(s) selected`
     : 'All Locations';
+  
+  const availableLocations = useMemo(() => {
+    if(filters.brandId === 'all') return locations;
+    return locations.filter(l => l.title === filters.brandId);
+  }, [filters.brandId, locations]);
 
-  const filteredLocations = locations.filter(loc => 
-    loc.name.toLowerCase().includes(locationSearch.toLowerCase())
+  const filteredDropdownLocations = availableLocations.filter(loc => 
+    loc.title.toLowerCase().includes(locationSearch.toLowerCase()) ||
+    loc.storefrontAddress?.locality.toLowerCase().includes(locationSearch.toLowerCase())
   );
 
   return (
@@ -84,7 +92,7 @@ const Header: React.FC<HeaderProps> = ({ brands, locations, filters, onFiltersCh
                     className="bg-transparent text-sm font-medium focus:outline-none"
                     >
                     <option value="all">All Brands</option>
-                    {brands.map(brand => (
+                    {groupedBrands.map(brand => (
                         <option key={brand.id} value={brand.id}>{brand.name}</option>
                     ))}
                     </select>
@@ -106,15 +114,15 @@ const Header: React.FC<HeaderProps> = ({ brands, locations, filters, onFiltersCh
                                 />
                             </div>
                             <div className="max-h-60 overflow-y-auto">
-                            {filteredLocations.map(location => (
-                                <label key={location.id} className="flex items-center space-x-2 p-1 hover:bg-slate-100 rounded">
+                            {filteredDropdownLocations.map(location => (
+                                <label key={location.name} className="flex items-center space-x-2 p-1 hover:bg-slate-100 rounded">
                                 <input
                                     type="checkbox"
-                                    checked={filters.locationIds.includes(location.id)}
-                                    onChange={() => handleLocationToggle(location.id)}
+                                    checked={filters.locationIds.includes(location.name)}
+                                    onChange={() => handleLocationToggle(location.name)}
                                     className="form-checkbox h-4 w-4 text-brand-blue"
                                 />
-                                <span>{location.name}</span>
+                                <span>{location.title} <span className="text-xs text-slate-500">- {location.storefrontAddress?.locality}</span></span>
                                 </label>
                             ))}
                             </div>

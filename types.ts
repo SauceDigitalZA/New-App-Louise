@@ -1,11 +1,42 @@
-export interface DailyMetric {
-  date: string;
-  searches: number;
-  mapViews: number;
-  websiteClicks: number;
-  calls: number;
-  directionRequests: number;
-  orderClicks: number;
+// API Response Types
+export interface GmbAccount {
+  name: string; // e.g., "accounts/12345"
+  displayName: string;
+  accountType: 'PERSONAL' | 'LOCATION_GROUP' | 'ORGANIZATION';
+}
+
+export interface ApiLocation {
+  name: string; // e.g., "locations/98765"
+  title: string;
+  languageCode: string;
+  storefrontAddress: {
+    addressLines: string[];
+    locality: string;
+    administrativeArea: string;
+    postalCode: string;
+    regionCode: string;
+  };
+}
+
+export interface DailyMetricTimeSeries {
+    dailyMetric: 'SEARCH_IMPRESSIONS' | 'MAPS_IMPRESSIONS' | 'WEBSITE_CLICKS' | 'PHONE_CALLS' | 'DRIVING_DIRECTIONS' | 'ORDER_CLICKS';
+    timeSeries: {
+        date: { year: number; month: number; day: number; };
+        value: string;
+    }[];
+}
+
+// Internal Application Types
+export interface Review {
+  name: string; // From API, e.g. "accounts/{accountId}/locations/{locationId}/reviews/{reviewId}"
+  reviewId: string;
+  reviewer: {
+    displayName: string;
+  };
+  starRating: 'ONE' | 'TWO' | 'THREE' | 'FOUR' | 'FIVE';
+  comment: string;
+  createTime: string; // ISO 8601 string
+  sentiment?: Sentiment; // Appended by Gemini
 }
 
 export enum Sentiment {
@@ -15,26 +46,13 @@ export enum Sentiment {
   Unanalyzed = 'Unanalyzed'
 }
 
-export interface Review {
-  id: string;
+export interface ProcessedReview {
+  id: string; // reviewId
   author: string;
   rating: number;
   text: string;
-  date: string;
+  date: string; // 'yyyy-MM-dd' format
   sentiment: Sentiment;
-}
-
-export interface Location {
-  id: string;
-  name: string;
-  brandId: string;
-  metrics: DailyMetric[];
-  reviews: Review[];
-}
-
-export interface Brand {
-  id: string;
-  name: string;
 }
 
 export interface DateRange {
@@ -43,8 +61,8 @@ export interface DateRange {
 }
 
 export interface Filters {
-  brandId: string;
-  locationIds: string[];
+  brandId: string; // Corresponds to location name/title for grouping
+  locationIds: string[]; // Location names, e.g. "locations/98765"
   dateRange: DateRange;
   compareDateRange: DateRange | null;
 }
@@ -56,11 +74,6 @@ export interface SentimentAnalysisResult {
     neutral: string;
     negative: string;
   };
-}
-
-export interface TrendDataPoint {
-  name: string;
-  value: number;
 }
 
 export interface ChartDataPoint {

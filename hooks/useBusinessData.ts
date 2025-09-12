@@ -1,22 +1,42 @@
-import { useMemo } from 'react';
-import { LOCATIONS, BRANDS } from '../constants';
-import { Filters, Location, DailyMetric, Review, ChartDataPoint } from '../types';
-// Fix: Changed date-fns imports to use direct paths to fix module resolution issues.
-import isWithinInterval from 'date-fns/isWithinInterval';
-import parseISO from 'date-fns/parseISO';
-import differenceInDays from 'date-fns/differenceInDays';
-import addDays from 'date-fns/addDays';
-import format from 'date-fns/format';
+import { useState, useEffect, useMemo } from 'react';
+import { Filters, ProcessedReview, ChartDataPoint, Review as ApiReview, Sentiment } from '../types';
+import { getDailyMetrics, getReviews } from '../services/gmbService';
+// Fix: Consolidate date-fns imports to resolve module resolution issues.
+import { isWithinInterval, parseISO, differenceInDays, addDays, format, startOfDay } from 'date-fns';
 
-const filterMetricsByDate = (metrics: DailyMetric[], dateRange: { from: Date; to: Date }) => {
-  return metrics.filter(m => isWithinInterval(parseISO(m.date), dateRange));
+const ratingToNumber = (rating: ApiReview['starRating']): number => {
+    switch (rating) {
+        case 'ONE': return 1;
+        case 'TWO': return 2;
+        case 'THREE': return 3;
+        case 'FOUR': return 4;
+        case 'FIVE': return 5;
+        default: return 0;
+    }
+}
+
+const processApiReviews = (reviews: ApiReview[]): ProcessedReview[] => {
+    return reviews.map(r => ({
+        id: r.reviewId,
+        author: r.reviewer?.displayName || 'A Customer',
+        rating: ratingToNumber(r.starRating),
+        text: r.comment || '',
+        date: format(parseISO(r.createTime), 'yyyy-MM-dd'),
+        sentiment: Sentiment.Unanalyzed,
+    }));
 };
 
-const filterReviewsByDate = (reviews: Review[], dateRange: { from: Date; to: Date }) => {
-    return reviews.filter(r => isWithinInterval(parseISO(r.date), dateRange));
-};
+interface DateMetric {
+    date: string;
+    searches: number;
+    mapViews: number;
+    websiteClicks: number;
+    calls: number;
+    directionRequests: number;
+    orderClicks: number;
+}
 
-const calculateTotals = (metrics: DailyMetric[]) => {
+const calculateTotals = (metrics: DateMetric[]) => {
     return metrics.reduce(
       (acc, metric) => {
         acc.searches += metric.searches;
@@ -31,152 +51,138 @@ const calculateTotals = (metrics: DailyMetric[]) => {
     );
 }
 
-const groupMetricsByDate = (metrics: DailyMetric[]) => {
-    return metrics.reduce((acc, metric) => {
-        const date = metric.date;
-        if (!acc[date]) {
-            acc[date] = { date, searches: 0, mapViews: 0, websiteClicks: 0, calls: 0, directionRequests: 0, orderClicks: 0 };
-        }
-        acc[date].searches += metric.searches;
-        acc[date].mapViews += metric.mapViews;
-        acc[date].websiteClicks += metric.websiteClicks;
-        acc[date].calls += metric.calls;
-        acc[date].directionRequests += metric.directionRequests;
-        acc[date].orderClicks += metric.orderClicks;
-        return acc;
-    }, {} as {[key: string]: DailyMetric});
-}
-
-const groupReviewsByDate = (reviews: Review[]) => {
+const groupReviewsByDate = (reviews: ProcessedReview[]) => {
     return reviews.reduce((acc, review) => {
         const date = review.date;
-        if (!acc[date]) {
-            acc[date] = 0;
-        }
+        if (!acc[date]) acc[date] = 0;
         acc[date]++;
         return acc;
     }, {} as {[key: string]: number});
 };
 
 
-export const useBusinessData = (filters: Filters) => {
-  const filteredLocations = useMemo(() => {
-    let locations = LOCATIONS;
-
-    if (filters.brandId !== 'all') {
-      locations = locations.filter(l => l.brandId === filters.brandId);
-    }
-
-    if (filters.locationIds.length > 0) {
-      locations = locations.filter(l => filters.locationIds.includes(l.id));
-    }
+export const useBusinessData = (token: string | null, accountId: string, locationIds: string[], filters: Filters) => {
+    const [allMetrics, setAllMetrics] = useState<{[date: string]: DateMetric}>({});
+    const [allReviews, setAllReviews] = useState<ProcessedReview[]>([]);
+    const [lifetimeReviews, setLifetimeReviews] = useState<ProcessedReview[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     
-    return locations;
-  }, [filters.brandId, filters.locationIds]);
+    useEffect(() => {
+        const fetchData = async () => {
+            if (!token || locationIds.length === 0) {
+                setAllMetrics({});
+                setAllReviews([]);
+                setLifetimeReviews([]);
+                setLoading(false);
+                return;
+            };
+            setLoading(true);
+            setError(null);
+            
+            try {
+                // Fetch metrics
+                const from = format(filters.dateRange.from, 'yyyy-MM-dd');
+                const to = format(filters.dateRange.to, 'yyyy-MM-dd');
+                const metricsResponse = await getDailyMetrics(token, locationIds, from, to);
+
+                const metricsByDate: {[date: string]: DateMetric} = {};
+                metricsResponse.forEach(series => {
+                    const dateStr = `${series.date.year}-${String(series.date.month).padStart(2,'0')}-${String(series.date.day).padStart(2,'0')}`;
+                    if (!metricsByDate[dateStr]) {
+                        metricsByDate[dateStr] = { date: dateStr, searches: 0, mapViews: 0, websiteClicks: 0, calls: 0, directionRequests: 0, orderClicks: 0 };
+                    }
+                    if(series.metric === 'SEARCH_IMPRESSIONS') metricsByDate[dateStr].searches += series.value;
+                    if(series.metric === 'MAPS_IMPRESSIONS') metricsByDate[dateStr].mapViews += series.value;
+                    if(series.metric === 'WEBSITE_CLICKS') metricsByDate[dateStr].websiteClicks += series.value;
+                    if(series.metric === 'PHONE_CALLS') metricsByDate[dateStr].calls += series.value;
+                    if(series.metric === 'DRIVING_DIRECTIONS') metricsByDate[dateStr].directionRequests += series.value;
+                    if(series.metric === 'ORDER_CLICKS') metricsByDate[dateStr].orderClicks += series.value;
+                });
+                setAllMetrics(metricsByDate);
+
+                // Fetch reviews
+                const reviewPromises = locationIds.map(locId => getReviews(token, accountId, locId));
+                const reviewsPerLocation = await Promise.all(reviewPromises);
+                const combinedReviews = reviewsPerLocation.flat();
+                const processed = processApiReviews(combinedReviews);
+                setLifetimeReviews(processed);
+                
+                // Filter reviews for the main period
+                const periodReviews = processed.filter(r => isWithinInterval(parseISO(r.date), {
+                    start: startOfDay(filters.dateRange.from),
+                    end: startOfDay(filters.dateRange.to),
+                }));
+                setAllReviews(periodReviews);
+
+            } catch (err) {
+                console.error('Error fetching business data:', err);
+                setError(err instanceof Error ? err.message : 'Failed to fetch data.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [token, accountId, locationIds.join(','), filters.dateRange.from, filters.dateRange.to]);
   
-  const processedData = useMemo(() => {
-    // Main period data
-    const mainPeriodLocations = filteredLocations.map(location => ({
-      ...location,
-      metrics: filterMetricsByDate(location.metrics, filters.dateRange),
-      reviews: filterReviewsByDate(location.reviews, filters.dateRange),
-    }));
-    const allMetrics = mainPeriodLocations.flatMap(l => l.metrics);
-    const allReviews = mainPeriodLocations.flatMap(l => l.reviews);
-    const totals = calculateTotals(allMetrics);
-    const averagePeriodRating = allReviews.length > 0
-        ? (allReviews.reduce((acc, r) => acc + r.rating, 0) / allReviews.length)
-        : 0;
-    
-    const mainMetricsByDate = groupMetricsByDate(allMetrics);
-    const mainReviewsByDate = groupReviewsByDate(allReviews);
+    const processedData = useMemo(() => {
+        const mainPeriodMetrics = Object.values(allMetrics);
+        const totals = calculateTotals(mainPeriodMetrics);
 
-
-    // Comparison period data
-    let compareTotals = null;
-    let compareAveragePeriodRating = 0;
-    let compareMetricsByDate: {[key: string]: DailyMetric} = {};
-    let compareReviewsByDate: {[key: string]: number} = {};
-
-    if (filters.compareDateRange) {
-        const comparePeriodLocations = filteredLocations.map(location => ({
-            ...location,
-            metrics: filterMetricsByDate(location.metrics, filters.compareDateRange),
-            reviews: filterReviewsByDate(location.reviews, filters.compareDateRange),
-        }));
-        const allCompareMetrics = comparePeriodLocations.flatMap(l => l.metrics);
-        const allCompareReviews = comparePeriodLocations.flatMap(l => l.reviews);
-        compareTotals = calculateTotals(allCompareMetrics);
-        compareAveragePeriodRating = allCompareReviews.length > 0
-            ? (allCompareReviews.reduce((acc, r) => acc + r.rating, 0) / allCompareReviews.length)
+        const averagePeriodRating = allReviews.length > 0
+            ? (allReviews.reduce((acc, r) => acc + r.rating, 0) / allReviews.length)
             : 0;
-        compareMetricsByDate = groupMetricsByDate(allCompareMetrics);
-        compareReviewsByDate = groupReviewsByDate(allCompareReviews);
-    }
-    
-    // Chart data generation
-    const chartData: ChartDataPoint[] = [];
-    const duration = differenceInDays(filters.dateRange.to, filters.dateRange.from);
-
-    for (let i = 0; i <= duration; i++) {
-        const mainDate = format(addDays(filters.dateRange.from, i), 'yyyy-MM-dd');
-        const mainDayData = mainMetricsByDate[mainDate];
-        const mainDayReviews = mainReviewsByDate[mainDate] || 0;
-
-        let compareDayData: DailyMetric | undefined;
-        let compareDayReviews = 0;
-        let compareDate: string | null = null;
         
-        if (filters.compareDateRange) {
-            const compareDateRaw = addDays(filters.compareDateRange.from, i);
-            compareDate = format(compareDateRaw, 'yyyy-MM-dd');
-            compareDayData = compareMetricsByDate[compareDate];
-            compareDayReviews = compareReviewsByDate[compareDate] || 0;
+        const mainReviewsByDate = groupReviewsByDate(allReviews);
+        
+        // TODO: Implement comparison period fetching if required. For now, it's disabled.
+        let compareTotals = null;
+        let compareAveragePeriodRating = 0;
+        
+        const chartData: ChartDataPoint[] = [];
+        const duration = differenceInDays(filters.dateRange.to, filters.dateRange.from);
+
+        for (let i = 0; i <= duration; i++) {
+            const mainDate = format(addDays(filters.dateRange.from, i), 'yyyy-MM-dd');
+            const mainDayData = allMetrics[mainDate];
+            const mainDayReviews = mainReviewsByDate[mainDate] || 0;
+
+            chartData.push({
+                dayLabel: format(parseISO(mainDate), 'MMM d'),
+                date: mainDayData ? format(parseISO(mainDayData.date), 'MMM d') : format(parseISO(mainDate), 'MMM d'),
+                compareDate: null,
+                searches: mainDayData?.searches ?? 0,
+                compareSearches: 0,
+                mapViews: mainDayData?.mapViews ?? 0,
+                compareMapViews: 0,
+                websiteClicks: mainDayData?.websiteClicks ?? 0,
+                compareWebsiteClicks: 0,
+                calls: mainDayData?.calls ?? 0,
+                compareCalls: 0,
+                directionRequests: mainDayData?.directionRequests ?? 0,
+                compareDirectionRequests: 0,
+                orderClicks: mainDayData?.orderClicks ?? 0,
+                compareOrderClicks: 0,
+                reviews: mainDayReviews,
+                compareReviews: 0,
+            });
         }
 
-        chartData.push({
-            dayLabel: format(parseISO(mainDate), 'MMM d'),
-            date: mainDayData ? format(parseISO(mainDayData.date), 'MMM d') : format(parseISO(mainDate), 'MMM d'),
-            compareDate: compareDate ? format(parseISO(compareDate), 'MMM d') : null,
-            searches: mainDayData?.searches ?? 0,
-            compareSearches: compareDayData?.searches ?? 0,
-            mapViews: mainDayData?.mapViews ?? 0,
-            compareMapViews: compareDayData?.mapViews ?? 0,
-            websiteClicks: mainDayData?.websiteClicks ?? 0,
-            compareWebsiteClicks: compareDayData?.websiteClicks ?? 0,
-            calls: mainDayData?.calls ?? 0,
-            compareCalls: compareDayData?.calls ?? 0,
-            directionRequests: mainDayData?.directionRequests ?? 0,
-            compareDirectionRequests: compareDayData?.directionRequests ?? 0,
-            orderClicks: mainDayData?.orderClicks ?? 0,
-            compareOrderClicks: compareDayData?.orderClicks ?? 0,
-            reviews: mainDayReviews,
-            compareReviews: compareDayReviews,
-        });
-    }
-
-    const lifetimeReviews = filteredLocations.flatMap(l => l.reviews);
+        return {
+            kpis: totals,
+            compareKpis: compareTotals,
+            chartData,
+            reviews: allReviews,
+            lifetimeReviews,
+            averagePeriodRating,
+            compareAveragePeriodRating,
+        };
+    }, [allMetrics, allReviews, lifetimeReviews, filters.dateRange, filters.compareDateRange]);
 
     return {
-      kpis: totals,
-      compareKpis: compareTotals,
-      chartData,
-      reviews: allReviews,
-      lifetimeReviews,
-      averagePeriodRating,
-      compareAveragePeriodRating,
+        ...processedData,
+        loading,
+        error,
     };
-  }, [filteredLocations, filters.dateRange, filters.compareDateRange]);
-
-  const availableLocations = useMemo(() => {
-    if(filters.brandId === 'all') return LOCATIONS;
-    return LOCATIONS.filter(l => l.brandId === filters.brandId)
-  }, [filters.brandId]);
-
-
-  return {
-    brands: BRANDS,
-    availableLocations,
-    ...processedData,
-  };
 };

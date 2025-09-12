@@ -1,13 +1,12 @@
 import React from 'react';
-import { Review, Sentiment } from '../types';
-// Fix: Changed date-fns imports to use direct paths to fix module resolution issues.
-import format from 'date-fns/format';
-import parseISO from 'date-fns/parseISO';
+import { ProcessedReview, Sentiment } from '../types';
+// Fix: Consolidate date-fns imports to resolve module resolution issues.
+import { format, parseISO } from 'date-fns';
 import { Star, ThumbsUp, ThumbsDown, Minus, Sparkles } from 'lucide-react';
 import SentimentSummary from './SentimentSummary';
 
 interface ReviewsPanelProps {
-  reviews: Review[];
+  reviews: ProcessedReview[];
   summaries: { positive: string; neutral: string; negative: string; } | null;
   onAnalyze: () => void;
   isAnalyzing: boolean;
