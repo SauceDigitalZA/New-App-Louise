@@ -1,7 +1,8 @@
 import React from 'react';
 import { Review, Sentiment } from '../types';
-// Fix: Corrected date-fns imports to use named imports from the main package to resolve call signature errors.
-import { format, parseISO } from 'date-fns';
+// Fix: Changed date-fns imports to use direct paths to fix module resolution issues.
+import format from 'date-fns/format';
+import parseISO from 'date-fns/parseISO';
 import { Star, ThumbsUp, ThumbsDown, Minus, Sparkles } from 'lucide-react';
 import SentimentSummary from './SentimentSummary';
 

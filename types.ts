@@ -1,4 +1,3 @@
-
 export interface DailyMetric {
   date: string;
   searches: number;
@@ -82,4 +81,10 @@ export interface ChartDataPoint {
   compareOrderClicks: number;
   reviews: number;
   compareReviews: number;
+}
+
+export interface User {
+  name: string;
+  email: string;
+  picture: string;
 }

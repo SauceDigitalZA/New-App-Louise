@@ -1,8 +1,12 @@
 import { useMemo } from 'react';
 import { LOCATIONS, BRANDS } from '../constants';
 import { Filters, Location, DailyMetric, Review, ChartDataPoint } from '../types';
-// Fix: Corrected date-fns imports to use named imports from the main package to resolve call signature errors.
-import { isWithinInterval, parseISO, differenceInDays, addDays, format } from 'date-fns';
+// Fix: Changed date-fns imports to use direct paths to fix module resolution issues.
+import isWithinInterval from 'date-fns/isWithinInterval';
+import parseISO from 'date-fns/parseISO';
+import differenceInDays from 'date-fns/differenceInDays';
+import addDays from 'date-fns/addDays';
+import format from 'date-fns/format';
 
 const filterMetricsByDate = (metrics: DailyMetric[], dateRange: { from: Date; to: Date }) => {
   return metrics.filter(m => isWithinInterval(parseISO(m.date), dateRange));

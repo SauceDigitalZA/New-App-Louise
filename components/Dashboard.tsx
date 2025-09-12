@@ -1,9 +1,11 @@
 import React, { useState, useMemo, useCallback } from 'react';
-// Fix: Corrected date-fns imports to use named imports from the main package to resolve call signature errors.
-import { subDays, startOfMonth, endOfMonth } from 'date-fns';
+// Fix: Changed date-fns imports to use direct paths to fix module resolution issues.
+import subDays from 'date-fns/subDays';
+import startOfMonth from 'date-fns/startOfMonth';
+import endOfMonth from 'date-fns/endOfMonth';
 import { MessageSquareQuote, Users, Star, Search, Map, MousePointerClick, Phone, Route, ShoppingCart } from 'lucide-react';
 
-import { Filters, DateRange, Review as ReviewType, Sentiment } from '../types';
+import { Filters, DateRange, Review as ReviewType, Sentiment, User } from '../types';
 import { useBusinessData } from '../hooks/useBusinessData';
 import { analyzeReviewSentiment } from '../services/geminiService';
 
@@ -14,7 +16,12 @@ import ViewsChart from './ViewsChart';
 import ActionsChart from './ActionsChart';
 import ReviewsChart from './ReviewsChart';
 
-const Dashboard: React.FC = () => {
+interface DashboardProps {
+  user: User;
+  onLogout: () => void;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const [reviews, setReviews] = useState<ReviewType[]>([]);
   const [sentimentSummaries, setSentimentSummaries] = useState<{positive: string; neutral: string; negative: string} | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -72,6 +79,8 @@ const Dashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800">
       <Header
+        user={user}
+        onLogout={onLogout}
         brands={brands}
         locations={availableLocations}
         filters={filters}
