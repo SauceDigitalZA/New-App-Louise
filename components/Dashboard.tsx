@@ -1,9 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
-// Fix: Use subpath imports for date-fns to resolve module errors.
-import subDays from 'date-fns/subDays';
-import startOfMonth from 'date-fns/startOfMonth';
-import endOfMonth from 'date-fns/endOfMonth';
-import { BarChart2, MessageSquareQuote, Users, LineChart, Star } from 'lucide-react';
+// Fix: Corrected date-fns imports to use named imports from the main package to resolve call signature errors.
+import { subDays, startOfMonth, endOfMonth } from 'date-fns';
+import { MessageSquareQuote, Users, Star, Search, Map, MousePointerClick, Phone, Route, ShoppingCart } from 'lucide-react';
 
 import { Filters, DateRange, Review as ReviewType, Sentiment } from '../types';
 import { useBusinessData } from '../hooks/useBusinessData';
@@ -11,8 +9,10 @@ import { analyzeReviewSentiment } from '../services/geminiService';
 
 import Header from './Header';
 import StatCard from './StatCard';
-import PerformanceChart from './PerformanceChart';
 import ReviewsPanel from './ReviewsPanel';
+import ViewsChart from './ViewsChart';
+import ActionsChart from './ActionsChart';
+import ReviewsChart from './ReviewsChart';
 
 const Dashboard: React.FC = () => {
   const [reviews, setReviews] = useState<ReviewType[]>([]);
@@ -29,7 +29,7 @@ const Dashboard: React.FC = () => {
     compareDateRange: null,
   });
 
-  const { brands, availableLocations, kpis, chartData, reviews: filteredReviews, lifetimeReviews } = useBusinessData(filters);
+  const { brands, availableLocations, kpis, compareKpis, chartData, reviews: filteredReviews, lifetimeReviews, averagePeriodRating, compareAveragePeriodRating } = useBusinessData(filters);
 
   React.useEffect(() => {
     setReviews(filteredReviews);
@@ -66,7 +66,7 @@ const Dashboard: React.FC = () => {
   const averageLifetimeRating = useMemo(() => {
       if (lifetimeReviews.length === 0) return 0;
       const total = lifetimeReviews.reduce((acc, r) => acc + r.rating, 0);
-      return (total / lifetimeReviews.length).toFixed(1);
+      return (total / lifetimeReviews.length);
   }, [lifetimeReviews]);
 
   return (
@@ -80,16 +80,25 @@ const Dashboard: React.FC = () => {
         reviewsData={reviews}
       />
       <main className="p-4 sm:p-6 lg:p-8" id="dashboard-content">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">
-          <StatCard icon={BarChart2} title="Total Views" value={kpis.searches + kpis.mapViews} description="Search + Map Views" />
-          <StatCard icon={LineChart} title="Customer Actions" value={kpis.websiteClicks + kpis.calls + kpis.directionRequests} description="Clicks, Calls, Directions" />
-          <StatCard icon={MessageSquareQuote} title="Reviews (Period)" value={reviews.length} description="In selected date range" />
-          <StatCard icon={Users} title="Total Reviews" value={totalLifetimeReviews} description="All-time reviews" />
-          <StatCard icon={Star} title="Avg. Rating" value={averageLifetimeRating} description="All-time average" />
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-6 mb-6">
+            <StatCard icon={Search} title="Search Views" value={kpis.searches} description="Impressions from Search" compareValue={compareKpis?.searches} />
+            <StatCard icon={Map} title="Map Views" value={kpis.mapViews} description="Impressions from Maps" compareValue={compareKpis?.mapViews} />
+            <StatCard icon={MousePointerClick} title="Website Clicks" value={kpis.websiteClicks} description="Clicks to your website" compareValue={compareKpis?.websiteClicks} />
+            <StatCard icon={Phone} title="Calls" value={kpis.calls} description="Tap-to-call actions" compareValue={compareKpis?.calls} />
+            <StatCard icon={Route} title="Direction Requests" value={kpis.directionRequests} description="Users asking for directions" compareValue={compareKpis?.directionRequests} />
+            <StatCard icon={ShoppingCart} title="Order Clicks" value={kpis.orderClicks} description="Clicks on order links" compareValue={compareKpis?.orderClicks} />
+            <StatCard icon={MessageSquareQuote} title="Reviews (Period)" value={filteredReviews.length} description="In selected date range" />
+            <StatCard icon={Star} title="Avg. Rating (Period)" value={averagePeriodRating.toFixed(1)} description="In selected date range" compareValue={compareAveragePeriodRating} />
+            <StatCard icon={Users} title="Total Reviews" value={totalLifetimeReviews} description="All-time reviews" />
+            <StatCard icon={Star} title="Avg. Rating (All-time)" value={averageLifetimeRating.toFixed(1)} description="All-time average" />
         </div>
         
         <div className="grid grid-cols-1 gap-6">
-            <PerformanceChart data={chartData} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <ViewsChart data={chartData} isComparing={!!filters.compareDateRange} />
+                <ActionsChart data={chartData} isComparing={!!filters.compareDateRange} />
+            </div>
+            <ReviewsChart data={chartData} isComparing={!!filters.compareDateRange} />
             <ReviewsPanel 
                 reviews={reviews}
                 summaries={sentimentSummaries}

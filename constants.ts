@@ -1,7 +1,6 @@
 import { Brand, Location, Review, Sentiment, DailyMetric } from './types';
-// Fix: Use subpath imports for date-fns to resolve module errors.
-import subDays from 'date-fns/subDays';
-import format from 'date-fns/format';
+// Fix: Corrected date-fns imports to use named imports from the main package to resolve call signature errors.
+import { subDays, format } from 'date-fns';
 
 const generateMetrics = (days: number): DailyMetric[] => {
   const metrics: DailyMetric[] = [];
@@ -14,6 +13,7 @@ const generateMetrics = (days: number): DailyMetric[] => {
       websiteClicks: Math.floor(Math.random() * (50 - 5 + 1) + 5),
       calls: Math.floor(Math.random() * (30 - 2 + 1) + 2),
       directionRequests: Math.floor(Math.random() * (40 - 10 + 1) + 10),
+      orderClicks: Math.floor(Math.random() * (20 - 1 + 1) + 1),
     });
   }
   return metrics.reverse();

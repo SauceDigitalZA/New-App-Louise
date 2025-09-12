@@ -6,6 +6,7 @@ export interface DailyMetric {
   websiteClicks: number;
   calls: number;
   directionRequests: number;
+  orderClicks: number;
 }
 
 export enum Sentiment {
@@ -56,4 +57,29 @@ export interface SentimentAnalysisResult {
     neutral: string;
     negative: string;
   };
+}
+
+export interface TrendDataPoint {
+  name: string;
+  value: number;
+}
+
+export interface ChartDataPoint {
+  dayLabel: string;
+  date: string | null;
+  compareDate: string | null;
+  searches: number;
+  compareSearches: number;
+  mapViews: number;
+  compareMapViews: number;
+  websiteClicks: number;
+  compareWebsiteClicks: number;
+  calls: number;
+  compareCalls: number;
+  directionRequests: number;
+  compareDirectionRequests: number;
+  orderClicks: number;
+  compareOrderClicks: number;
+  reviews: number;
+  compareReviews: number;
 }

@@ -1,8 +1,7 @@
 import React from 'react';
 import { Review, Sentiment } from '../types';
-// Fix: Use subpath imports for date-fns to resolve module errors.
-import format from 'date-fns/format';
-import parseISO from 'date-fns/parseISO';
+// Fix: Corrected date-fns imports to use named imports from the main package to resolve call signature errors.
+import { format, parseISO } from 'date-fns';
 import { Star, ThumbsUp, ThumbsDown, Minus, Sparkles } from 'lucide-react';
 import SentimentSummary from './SentimentSummary';
 
