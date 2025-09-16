@@ -1,12 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Filters, ProcessedReview, ChartDataPoint, Review as ApiReview, Sentiment } from '../types';
 import { getDailyMetrics, getReviews } from '../services/gmbService';
-// Fix: Use deep imports for date-fns functions to resolve module resolution issues.
-import isWithinInterval from 'date-fns/isWithinInterval';
+// Fix: Changed parseISO and startOfDay imports to be explicit from submodules to resolve module export errors.
+import { isWithinInterval, differenceInDays, addDays, format } from 'date-fns';
 import parseISO from 'date-fns/parseISO';
-import differenceInDays from 'date-fns/differenceInDays';
-import addDays from 'date-fns/addDays';
-import format from 'date-fns/format';
 import startOfDay from 'date-fns/startOfDay';
 
 const ratingToNumber = (rating: ApiReview['starRating']): number => {

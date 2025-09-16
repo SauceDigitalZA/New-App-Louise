@@ -22,9 +22,23 @@ const fetchWithAuth = async (url: string, token: string, options: RequestInit = 
 };
 
 export const getAccounts = async (token: string): Promise<GmbAccount[]> => {
-  const url = `${API_BASE}${ACCOUNT_MANAGEMENT_API}/accounts`;
-  const data = await fetchWithAuth(url, token);
-  return data.accounts || [];
+  let allAccounts: GmbAccount[] = [];
+  let nextPageToken: string | undefined = undefined;
+  const baseUrl = `${API_BASE}${ACCOUNT_MANAGEMENT_API}/accounts`;
+
+  do {
+    const url = nextPageToken ? `${baseUrl}?pageToken=${nextPageToken}` : baseUrl;
+    const data = await fetchWithAuth(url, token);
+    
+    if (data.accounts) {
+        allAccounts = allAccounts.concat(data.accounts);
+    }
+    
+    nextPageToken = data.nextPageToken;
+
+  } while (nextPageToken);
+
+  return allAccounts;
 };
 
 export const getLocations = async (token: string, accountId: string): Promise<ApiLocation[]> => {
@@ -74,8 +88,6 @@ export const getDailyMetrics = async (token: string, locationNames: string[], fr
       response.multiDailyMetricTimeSeries.forEach((locationMetrics: any) => {
           if (locationMetrics.dailyMetricTimeSeries) {
               locationMetrics.dailyMetricTimeSeries.forEach((ts: DailyMetricTimeSeries) => {
-                  // Fix: The 'timeSeries' property is the array of data points itself, not an object containing 'dateValues'.
-                  // Iterate over 'ts.timeSeries' directly.
                   if (ts.timeSeries) {
                       ts.timeSeries.forEach((dp: any) => {
                           allMetrics.push({

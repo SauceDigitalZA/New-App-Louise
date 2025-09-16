@@ -1,7 +1,7 @@
 import React from 'react';
 import { ProcessedReview, Sentiment } from '../types';
-// Fix: Switched to deep imports for date-fns to resolve module resolution errors.
-import format from 'date-fns/format';
+// Fix: Changed parseISO import to be explicit from submodule to resolve module export error.
+import { format } from 'date-fns';
 import parseISO from 'date-fns/parseISO';
 import { Star, ThumbsUp, ThumbsDown, Minus, Sparkles } from 'lucide-react';
 import SentimentSummary from './SentimentSummary';

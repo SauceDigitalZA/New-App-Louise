@@ -1,9 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { ApiLocation, Filters, ChartDataPoint, ProcessedReview, User } from '../types';
-// Fix: Switched to deep imports for date-fns to resolve module resolution errors.
-import format from 'date-fns/format';
+// Fix: Changed subDays import to be explicit from submodule to resolve module export error.
+import { format, differenceInDays } from 'date-fns';
 import subDays from 'date-fns/subDays';
-import differenceInDays from 'date-fns/differenceInDays';
 import { Download, SlidersHorizontal, BarChartBig, Search, LogOut } from 'lucide-react';
 import { exportToPDF, exportToExcel } from '../services/exportService';
 

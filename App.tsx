@@ -15,6 +15,7 @@ const App: React.FC = () => {
   const [locations, setLocations] = useState<ApiLocation[]>([]);
   const [appState, setAppState] = useState<AppState>('login');
   const [error, setError] = useState<string | null>(null);
+  const [isProcessingLogin, setIsProcessingLogin] = useState(false);
 
   const login = useGoogleLogin({
     onSuccess: (tokenResponse) => {
@@ -31,7 +32,8 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const processLogin = async () => {
-      if (token) {
+      if (token && !isProcessingLogin) {
+        setIsProcessingLogin(true);
         try {
           // Fetch user profile
           const res = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo`, {
@@ -58,13 +60,15 @@ const App: React.FC = () => {
           console.error("Error during login process:", err);
           setError(err instanceof Error ? err.message : "An unknown error occurred.");
           setAppState('error');
+        } finally {
+          setIsProcessingLogin(false);
         }
       }
     };
     if (appState === 'loading-accounts') {
         processLogin();
     }
-  }, [token, appState]);
+  }, [token, appState, isProcessingLogin]);
 
   useEffect(() => {
     const fetchLocations = async () => {
