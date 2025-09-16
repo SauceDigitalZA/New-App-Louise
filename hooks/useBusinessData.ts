@@ -1,8 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Filters, ProcessedReview, ChartDataPoint, Review as ApiReview, Sentiment } from '../types';
 import { getDailyMetrics, getReviews } from '../services/gmbService';
-// Fix: Changed parseISO and startOfDay imports to be explicit from submodules to resolve module export errors.
-import { isWithinInterval, differenceInDays, addDays, format } from 'date-fns';
+// Fix: Changed date-fns imports to individual paths to resolve module resolution errors.
+import isWithinInterval from 'date-fns/isWithinInterval';
+import differenceInDays from 'date-fns/differenceInDays';
+import addDays from 'date-fns/addDays';
+import format from 'date-fns/format';
 import parseISO from 'date-fns/parseISO';
 import startOfDay from 'date-fns/startOfDay';
 
@@ -104,7 +107,7 @@ export const useBusinessData = (token: string | null, accountId: string, locatio
                 setAllMetrics(metricsByDate);
 
                 // Fetch reviews
-                const reviewPromises = locationIds.map(locId => getReviews(token, accountId, locId));
+                const reviewPromises = locationIds.map(locId => getReviews(token, locId));
                 const reviewsPerLocation = await Promise.all(reviewPromises);
                 const combinedReviews = reviewsPerLocation.flat();
                 const processed = processApiReviews(combinedReviews);
@@ -113,7 +116,7 @@ export const useBusinessData = (token: string | null, accountId: string, locatio
                 // Filter reviews for the main period
                 const periodReviews = processed.filter(r => isWithinInterval(parseISO(r.date), {
                     start: startOfDay(filters.dateRange.from),
-                    end: startOfDay(filters.dateRange.to),
+                    end: startOfDay(filters.dateRange.to)
                 }));
                 setAllReviews(periodReviews);
 

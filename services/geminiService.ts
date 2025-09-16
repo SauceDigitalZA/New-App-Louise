@@ -64,20 +64,13 @@ export const analyzeReviewSentiment = async (reviews: ReviewForAnalysis[]): Prom
   const model = "gemini-2.5-flash";
   const reviewsForAnalysis = reviews.map(({ id, text }) => ({ id, text }));
   
-  const prompt = `
-    You are an expert business review analyst.
-    Your task is to perform sentiment analysis on a list of customer reviews.
+  // Fix: Use a more concise and direct prompt for sentiment analysis.
+  const prompt = `Analyze the sentiment of the following customer reviews.
+For each review, classify it as 'Positive', 'Neutral', or 'Negative'.
+Then, provide a concise summary for each sentiment category (positive, neutral, negative) based on the provided reviews.
 
-    For each review, classify the sentiment as 'Positive', 'Neutral', or 'Negative'.
-
-    After analyzing all reviews, provide three summaries:
-    1. A summary of the common themes in the positive reviews.
-    2. A summary of the common themes in the neutral reviews.
-    3. A summary of the common themes and actionable feedback from the negative reviews.
-
-    Here is the list of reviews to analyze:
-    ${JSON.stringify(reviewsForAnalysis)}
-  `;
+Reviews:
+${JSON.stringify(reviewsForAnalysis)}`;
 
   try {
     const response = await ai.models.generateContent({
@@ -89,7 +82,8 @@ export const analyzeReviewSentiment = async (reviews: ReviewForAnalysis[]): Prom
         },
     });
 
-    const jsonString = response.text;
+    // Fix: Trim the response text to remove potential leading/trailing whitespace before parsing JSON.
+    const jsonString = response.text.trim();
     const parsedResult = JSON.parse(jsonString);
 
     // Validate and map the sentiment strings to our Enum

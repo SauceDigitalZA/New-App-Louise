@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
-// Fix: Changed date-fns imports for subDays and startOfMonth to be explicit from submodules to resolve module export errors.
-import { endOfMonth } from 'date-fns';
+// Fix: Changed date-fns imports to individual paths to resolve module resolution errors.
+import endOfMonth from 'date-fns/endOfMonth';
 import subDays from 'date-fns/subDays';
 import startOfMonth from 'date-fns/startOfMonth';
 import { MessageSquareQuote, Users, Star, Search, Map, MousePointerClick, Phone, Route, ShoppingCart, Loader2, AlertTriangle } from 'lucide-react';

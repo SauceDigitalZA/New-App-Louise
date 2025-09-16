@@ -4,7 +4,6 @@ const API_BASE = 'https://';
 const ACCOUNT_MANAGEMENT_API = 'mybusinessaccountmanagement.googleapis.com/v1';
 const BUSINESS_INFORMATION_API = 'mybusinessbusinessinformation.googleapis.com/v1';
 const PERFORMANCE_API = 'businessprofileperformance.googleapis.com/v1';
-const REVIEWS_API = 'mybusiness.googleapis.com/v4';
 
 const fetchWithAuth = async (url: string, token: string, options: RequestInit = {}) => {
   const headers = {
@@ -106,10 +105,10 @@ export const getDailyMetrics = async (token: string, locationNames: string[], fr
 };
 
 
-export const getReviews = async (token: string, accountId: string, locationId: string): Promise<Review[]> => {
-  const locId = locationId.split('/')[1];
-  const accId = accountId.split('/')[1];
-  const url = `${API_BASE}${REVIEWS_API}/accounts/${accId}/locations/${locId}/reviews`;
+export const getReviews = async (token: string, locationName: string): Promise<Review[]> => {
+  // Use the modern v1 endpoint for fetching reviews, which is part of the Account Management API.
+  // The locationName (e.g., "locations/12345") is the parent resource for its reviews.
+  const url = `${API_BASE}${ACCOUNT_MANAGEMENT_API}/${locationName}/reviews`;
   const data = await fetchWithAuth(url, token);
   return data.reviews || [];
 };
